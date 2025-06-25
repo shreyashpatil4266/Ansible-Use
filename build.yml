@@ -1,0 +1,41 @@
+---
+- name: Clone Wifi_CPU repo, build Docker image, and run container
+  hosts: ec2-nodes
+  become: true
+
+  tasks:
+    - name: Ensure git is installed
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+
+    - name: Clone the GitHub repo
+      git:
+        repo: https://github.com/shreyashpatil4266/Wifi_CPU.git
+        dest: /home/ubuntu/Wifi_CPU
+        version: main
+
+    - name: Rename dockerfile to Dockerfile if needed
+      command: mv dockerfile Dockerfile
+      args:
+        chdir: /home/ubuntu/Wifi_CPU
+      ignore_errors: yes
+
+    - name: Build the Docker image using community.docker
+      community.docker.docker_image:
+        name: wifi-cpu-app
+        source: build
+        build:
+          path: /home/ubuntu/Wifi_CPU
+        state: present
+
+    - name: Run the Docker container
+      community.docker.docker_container:
+        name: wifi-cpu-container
+        image: wifi-cpu-app
+        state: started
+        ports:
+          - "8080:5000"
+        restart_policy: always
+

@@ -1,0 +1,29 @@
+---
+- name: Deploy Docker Container on Each EC2 with Different Port
+  hosts: ec2-nodes
+  become: true
+
+  vars:
+    container_image: nginx
+    container_name: webserver
+    port_mapping:
+      node2: "8081"
+      node3: "8082"
+      node4: "8083"
+      node5: "8084"
+      node1: "8080"
+
+  tasks:
+    - name: Pull Docker image
+      docker_image:
+        name: "{{ container_image }}"
+        source: pull
+
+    - name: Run Docker container with unique port
+      docker_container:
+        name: "{{ container_name }}"
+        image: "{{ container_image }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ port_mapping[inventory_hostname] }}:80"
